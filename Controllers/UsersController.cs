@@ -6,52 +6,58 @@ using Microsoft.EntityFrameworkCore;
 namespace IsMyPlantSickApp.Controllers;
 
 [ApiController]
-[Route("[users]")]
-public class UsersController : ControllerBase {
-    private readonly ILogger<UsersController> _logger;
-    private readonly AppDbContext _dbContext;
-
-    public UsersController(ILogger<UsersController> logger, AppDbContext dbContext) {
-        _logger = logger;
-        _dbContext = dbContext;
-    }
-
+[Route("api/[controller]")]
+public class UsersController(AppDbContext dbContext) : ControllerBase {
     [HttpGet("{id}")]  // TODO maybe: Add caching, sorting, pagination, etc.
-    public async Task<ActionResult<User>> Get(int id) {
-        var user = await _dbContext.Users.FindAsync(id);
+    public async Task<ActionResult<UserResponseDto>> Get(int id) {
+        var user = await dbContext.Users.FindAsync(id);
         if (user == null) return NotFound();
-        return user;
+        return new UserResponseDto(user);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<User>> Create(User newUser) {
-        _dbContext.Users.Add(newUser);
-        await _dbContext.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
+    [HttpPost("Create")]
+    public async Task<ActionResult<UserResponseDto>> Create(UserCreationBodyDto newUser) {
+        var existentUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == newUser.Email);
+        if (existentUser != null) return Conflict();
+
+        var user = new User(newUser);
+
+        await dbContext.Users.AddAsync(user);
+        await dbContext.SaveChangesAsync();
+
+        var userResponse = new UserResponseDto(user);
+        return CreatedAtAction(nameof(Get), new { id = userResponse.Id }, userResponse);
     }
 
-    [HttpPut]
-    public async Task<IActionResult> Update(User user) {
-        _dbContext.Entry(user).State = EntityState.Modified;
-
-        try {
-            await _dbContext.SaveChangesAsync();
-        } catch (DbUpdateConcurrencyException) {
-            if (await _dbContext.Users.FindAsync(user.Id) == null) {
-                return NotFound();
-            } else throw;
+    [HttpPut("Update")]
+    public async Task<IActionResult> Update(UserUpdateBodyDto userUpdateBody) {
+        User? existingUser = null;
+        if (userUpdateBody.Id != default) {
+            existingUser = await dbContext.Users.FindAsync(userUpdateBody.Id);
+        } else if (!string.IsNullOrWhiteSpace(userUpdateBody.Email)) {
+            existingUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == userUpdateBody.Email);
         }
+
+        if (existingUser == null) return NotFound();
+
+        if (!existingUser.TryUpdateFromDto(userUpdateBody)) return Ok();
+
+        var entry = dbContext.Entry(existingUser);
+
+        entry.State = EntityState.Modified;
+
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("Delete/{id}")]
     public async Task<IActionResult> Delete(int id) {
-        var user = await _dbContext.Users.FindAsync(id);
+        var user = await dbContext.Users.FindAsync(id);
         if (user == null) return NotFound();
 
-        _dbContext.Users.Remove(user);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Users.Remove(user);
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }

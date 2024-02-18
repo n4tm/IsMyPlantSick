@@ -3,11 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IsMyPlantSickApp.Database;
 
-public class AppDbContext : DbContext {
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options) {
     public DbSet<User> Users { get; set; }
 
     public DbSet<Diagnosis> Diagnoses { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseNpgsql("Host=my_host;Database=my_db;Username=my_user;Password=my_pw");
 }

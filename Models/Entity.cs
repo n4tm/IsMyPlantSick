@@ -2,25 +2,25 @@
 
 /// <summary>Generic Entity</summary>
 /// <typeparam name="T"></typeparam>
-public abstract class Entity<TId> {
-    public required TId Id { get; set; }
+public abstract class Entity<TId> : IAuditable where TId : struct {
+    public TId Id { get; init; }
 
-    public DateTime CreationTime { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreationTime { get; set; }
 
-    public DateTime LastUpdateTime { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset LastUpdateTime { get; set; }
 
     public virtual bool IsValid() => true;
 }
 
 public abstract class EntityFilter<TId, TEntity> 
     where TEntity : Entity<TId>
-    where TId : IEquatable<TId> {
+    where TId : struct, IEquatable<TId> {
 
     public TId? Id { get; set; }
 
-    public DateTime? CreationTime { get; set; }
+    public DateTimeOffset? CreationTime { get; set; }
 
-    public DateTime? LastUpdateTime { get; set; }
+    public DateTimeOffset? LastUpdateTime { get; set; }
 
     public IEnumerable<TEntity> Apply(IEnumerable<TEntity> entities) =>
         entities.Where(entity =>
