@@ -15,6 +15,18 @@ public class UsersController(AppDbContext dbContext) : ControllerBase {
         return new UserResponseDto(user);
     }
 
+    [HttpPost("Login")]
+    public async Task<ActionResult<UserResponseDto>> Login(UserLoginBodyDto loginData) {
+        var user = await dbContext.Users.FirstOrDefaultAsync(u =>
+            u.Email == loginData.Email &&
+            u.Password == loginData.Password
+        );
+
+        if (user == null) return NotFound();
+
+        return new UserResponseDto(user);
+    }
+
     [HttpPost("Create")]
     public async Task<ActionResult<UserResponseDto>> Create(UserCreationBodyDto newUser) {
         var existentUser = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == newUser.Email);

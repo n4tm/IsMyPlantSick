@@ -1,3 +1,6 @@
+using IsMyPlantSickApp.Database;
+using Microsoft.EntityFrameworkCore;
+
 namespace IsMyPlantSickApp;
 
 public class Program {
@@ -8,11 +11,13 @@ public class Program {
 
         var app = builder.Build();
 
+        app.Services.GetService<AppDbContext>()!.Database.Migrate();
+
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment()) {
+        //if (app.Environment.IsDevelopment()) {
             app.UseSwagger();
             app.UseSwaggerUI();
-        }
+        //}
 
         app.UseHttpsRedirection();
 

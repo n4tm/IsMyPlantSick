@@ -8,6 +8,9 @@ public class Diagnosis : Entity<int> {
     public int UserId { get; set; }
 }
 
+public record RequestDiagnosisDto(string ImageBytesInBase64, int UserId);
+
+
 public enum PlantSpecies {
     Unknown,
     Cassava
@@ -15,9 +18,9 @@ public enum PlantSpecies {
 }
 
 public enum PlantDisease {
-    None,
     BacterialBlight,
-    MosaicDisease,
     BrownStreakDisease,
-    GreenMottle
+    GreenMottle,
+    MosaicDisease,
+    None
 }
